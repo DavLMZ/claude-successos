@@ -53,7 +53,7 @@ const MOTIONS: Motion[] = [
 export function PlaybookGeneratorTab({ account }: { account: Account }) {
   const [motion, setMotion] = useState<Motion>("Train the Trainer");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
+  const [progress, setProgress] = useState<string[]>([]);
   const [result, setResult] = useState<PlaybookResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"revised" | "initial" | "critique">("revised");
@@ -62,17 +62,51 @@ export function PlaybookGeneratorTab({ account }: { account: Account }) {
     setLoading(true);
     setError(null);
     setResult(null);
-    setStatus("Planning the playbook…");
+    setProgress([]);
     try {
       const res = await fetch("/api/build-playbook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountId: account.id, motion }),
       });
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      const data: PlaybookResult = await res.json();
-      setResult(data);
-      setStatus("");
+      if (!res.ok || !res.body) throw new Error(`Request failed: ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line) continue;
+          try {
+            const msg = JSON.parse(line);
+            if (msg.type === "status") {
+              setProgress((p) => [...p, msg.message]);
+            } else if (msg.type === "final") {
+              setResult({
+                initial: msg.initial,
+                critique: msg.critique,
+                revised: msg.revised,
+              });
+            } else if (msg.type === "error") {
+              throw new Error(msg.message);
+            }
+          } catch (parseErr) {
+            if (
+              parseErr instanceof Error &&
+              parseErr.message &&
+              !parseErr.message.includes("JSON")
+            ) {
+              throw parseErr;
+            }
+          }
+        }
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -101,7 +135,7 @@ export function PlaybookGeneratorTab({ account }: { account: Account }) {
                 on the critique. You see all three outputs.
               </p>
             </div>
-            <Badge tone="accent">Multi-step agent · Sonnet + Opus</Badge>
+            <Badge tone="accent">Multi-step agent · Sonnet</Badge>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <label className="text-xs text-[var(--text-muted)]">Motion:</label>
@@ -129,17 +163,28 @@ export function PlaybookGeneratorTab({ account }: { account: Account }) {
         </Card>
       )}
 
-      {loading && (
+      {(loading || progress.length > 0) && !result && (
         <Card>
-          <div className="p-6 text-sm text-[var(--text-muted)] italic">
-            {status || "Running plan → critique → revise. This takes 40-60 seconds."}
+          <div className="p-5">
+            <h3 className="font-semibold text-sm mb-3">Agent activity (live)</h3>
+            <div className="space-y-1">
+              {progress.map((p, i) => (
+                <div key={i} className="text-xs text-[var(--text-muted)]">
+                  <span className="text-[var(--accent)]">▸</span> {p}
+                </div>
+              ))}
+            </div>
+            {loading && (
+              <div className="text-xs text-[var(--text-dim)] italic pt-3">
+                Streaming progress — each step takes ~10 seconds.
+              </div>
+            )}
           </div>
         </Card>
       )}
 
       {result && (
         <>
-          {/* Critique scorecard */}
           <Card>
             <div className="p-5">
               <div className="flex items-center justify-between mb-3">
@@ -161,7 +206,9 @@ export function PlaybookGeneratorTab({ account }: { account: Account }) {
               </div>
               {result.critique.top_fixes.length > 0 && (
                 <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                  <div className="text-xs text-[var(--text-dim)] mb-2">Top fixes the critic applied:</div>
+                  <div className="text-xs text-[var(--text-dim)] mb-2">
+                    Top fixes the critic applied:
+                  </div>
                   <ul className="space-y-1.5 text-xs">
                     {result.critique.top_fixes.map((f, i) => (
                       <li key={i}>
@@ -176,7 +223,6 @@ export function PlaybookGeneratorTab({ account }: { account: Account }) {
             </div>
           </Card>
 
-          {/* View toggle */}
           <div className="flex items-center gap-1 border-b border-[var(--border)]">
             {(["revised", "initial"] as const).map((v) => (
               <button

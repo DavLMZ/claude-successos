@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { anthropic, MODELS } from "@/lib/anthropic";
 import { getAccount } from "@/data/accounts";
 import {
@@ -8,17 +7,16 @@ import {
 } from "@/lib/prompts/playbook";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  try {
-    const { accountId, motion } = await req.json();
-    const account = getAccount(accountId);
-    if (!account) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
-    }
+  const { accountId, motion } = await req.json();
+  const account = getAccount(accountId);
+  if (!account) {
+    return new Response("Account not found", { status: 404 });
+  }
 
-    const accountContext = `Customer: ${account.name}
+  const accountContext = `Customer: ${account.name}
 Industry: ${account.industry}
 Employees: ${account.employees.toLocaleString()}
 Adoption stage: ${account.stage}
@@ -26,58 +24,84 @@ Surfaces in use: API + ${account.surfaces.cfe.seats > 0 ? "CfE" : ""} ${account.
 Top risks: ${account.risks.map((r) => r.label).join("; ")}
 Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
 
-    // STEP 1: Plan
-    const plannerInput = `Motion: ${motion}
+  const encoder = new TextEncoder();
+  const readable = new ReadableStream({
+    async start(controller) {
+      function emit(event: Record<string, unknown>) {
+        controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+      }
 
-${accountContext}
+      try {
+        // STEP 1: Plan
+        emit({ type: "status", message: "Step 1/3 — Drafting initial playbook" });
+        const plan = await anthropic.messages.create({
+          model: MODELS.SONNET,
+          max_tokens: 2500,
+          system: PLAYBOOK_PLANNER_SYSTEM,
+          messages: [
+            {
+              role: "user",
+              content: `Motion: ${motion}\n\n${accountContext}\n\nGenerate the playbook JSON.`,
+            },
+          ],
+        });
+        const initial = JSON.parse(extractJson(plan.content[0]));
+        emit({ type: "step_complete", step: "initial", data: initial });
 
-Generate the playbook JSON.`;
+        // STEP 2: Critique (use Sonnet not Opus for speed under timeout)
+        emit({ type: "status", message: "Step 2/3 — Critiquing as a skeptical VP" });
+        const critique = await anthropic.messages.create({
+          model: MODELS.SONNET,
+          max_tokens: 1500,
+          system: PLAYBOOK_CRITIC_SYSTEM,
+          messages: [
+            {
+              role: "user",
+              content: `Playbook to critique:\n\n${JSON.stringify(initial, null, 2)}\n\nAccount context:\n${accountContext}`,
+            },
+          ],
+        });
+        const critiqueData = JSON.parse(extractJson(critique.content[0]));
+        emit({ type: "step_complete", step: "critique", data: critiqueData });
 
-    const plan = await anthropic.messages.create({
-      model: MODELS.SONNET,
-      max_tokens: 3000,
-      system: PLAYBOOK_PLANNER_SYSTEM,
-      messages: [{ role: "user", content: plannerInput }],
-    });
-    const initialJson = extractJson(plan.content[0]);
-    const initial = JSON.parse(initialJson);
+        // STEP 3: Revise
+        emit({ type: "status", message: "Step 3/3 — Revising based on critique" });
+        const revise = await anthropic.messages.create({
+          model: MODELS.SONNET,
+          max_tokens: 2500,
+          system: PLAYBOOK_REVISER_SYSTEM,
+          messages: [
+            {
+              role: "user",
+              content: `Original playbook:\n${JSON.stringify(initial, null, 2)}\n\nCritic feedback to apply:\n${JSON.stringify(critiqueData, null, 2)}\n\nReturn the revised playbook as JSON only.`,
+            },
+          ],
+        });
+        const revised = JSON.parse(extractJson(revise.content[0]));
+        emit({ type: "step_complete", step: "revised", data: revised });
 
-    // STEP 2: Critique (Opus for sharper criticism)
-    const critique = await anthropic.messages.create({
-      model: MODELS.OPUS,
-      max_tokens: 2000,
-      system: PLAYBOOK_CRITIC_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Playbook to critique:\n\n${JSON.stringify(initial, null, 2)}\n\nAccount context:\n${accountContext}`,
-        },
-      ],
-    });
-    const critiqueJson = extractJson(critique.content[0]);
-    const critiqueData = JSON.parse(critiqueJson);
+        emit({
+          type: "final",
+          initial,
+          critique: critiqueData,
+          revised,
+        });
+        controller.close();
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "Unknown error";
+        console.error("build-playbook error:", e);
+        emit({ type: "error", message });
+        controller.close();
+      }
+    },
+  });
 
-    // STEP 3: Revise
-    const revise = await anthropic.messages.create({
-      model: MODELS.SONNET,
-      max_tokens: 3000,
-      system: PLAYBOOK_REVISER_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Original playbook:\n${JSON.stringify(initial, null, 2)}\n\nCritic feedback to apply:\n${JSON.stringify(critiqueData, null, 2)}\n\nReturn the revised playbook as JSON only.`,
-        },
-      ],
-    });
-    const revisedJson = extractJson(revise.content[0]);
-    const revised = JSON.parse(revisedJson);
-
-    return NextResponse.json({ initial, critique: critiqueData, revised });
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    console.error("build-playbook error:", e);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "application/x-ndjson; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+    },
+  });
 }
 
 function extractJson(block: { type: string; text?: string }): string {
@@ -85,10 +109,8 @@ function extractJson(block: { type: string; text?: string }): string {
     throw new Error("Expected text block from Claude");
   }
   const text = block.text.trim();
-  // Strip code fences if present
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (fenced) return fenced[1].trim();
-  // Find first { and last }
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start === -1 || end === -1) {
