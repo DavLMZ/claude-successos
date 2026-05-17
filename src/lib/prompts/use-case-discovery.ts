@@ -36,7 +36,9 @@ After the structured list, write a 3-paragraph narrative:
 Tools available:
 - search_use_case_library(industry, function, complexity_max)
 - estimate_roi(use_case_name, company_size, function_size)
-- get_starter_playbook(use_case_id)`;
+- get_starter_playbook(use_case_id)
+
+CRITICAL EFFICIENCY RULE: Make ALL your tool calls in parallel in a single response wherever possible. For example, if you need to search 3 different functions (legal, finance, engineering), emit 3 search_use_case_library tool_use blocks in the SAME response — do not make them sequentially across multiple turns. This is essential because the user is waiting and serverless timeouts apply.`;
 
 export const USE_CASE_TOOLS = [
   {

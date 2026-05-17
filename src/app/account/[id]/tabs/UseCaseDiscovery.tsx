@@ -38,20 +38,60 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
   const [signal, setSignal] = useState(PRESETS[0]);
   const [result, setResult] = useState<DiscoveryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string[]>([]);
+  const [liveCalls, setLiveCalls] = useState<
+    { name: string; input: Record<string, unknown> }[]
+  >([]);
 
   async function discover() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setProgress([]);
+    setLiveCalls([]);
     try {
       const res = await fetch("/api/discover-use-cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountId: account.id, signal }),
       });
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      const data: DiscoveryResult = await res.json();
-      setResult(data);
+      if (!res.ok || !res.body) throw new Error(`Request failed: ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line) continue;
+          try {
+            const msg = JSON.parse(line);
+            if (msg.type === "status") {
+              setProgress((p) => [...p, msg.message]);
+            } else if (msg.type === "tool_call") {
+              setLiveCalls((c) => [...c, { name: msg.name, input: msg.input }]);
+            } else if (msg.type === "final") {
+              setResult({
+                use_cases: msg.use_cases ?? [],
+                narrative: msg.narrative ?? "",
+                tool_calls: msg.tool_calls ?? [],
+              });
+            } else if (msg.type === "error") {
+              throw new Error(msg.message);
+            }
+          } catch (parseErr) {
+            // skip malformed lines but propagate explicit error events
+            if (parseErr instanceof Error && parseErr.message && !parseErr.message.includes("JSON")) {
+              throw parseErr;
+            }
+          }
+        }
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -67,9 +107,9 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
             <div>
               <h2 className="font-semibold mb-1">Use Case Discovery Agent</h2>
               <p className="text-sm text-[var(--text-muted)] max-w-2xl">
-                You describe a customer signal. Claude calls tools to search Anthropic&apos;s use case
-                library, estimate ROI for this company size, and pull starter playbooks. Returns 5-8
-                prioritized use cases.
+                You describe a customer signal. Claude calls tools — in parallel where possible — to
+                search Anthropic&apos;s use case library, estimate ROI for this company size, and
+                pull starter playbooks. Returns 5-8 prioritized use cases.
               </p>
             </div>
             <Badge tone="accent">Tool use · Sonnet</Badge>
@@ -109,11 +149,40 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
         </Card>
       )}
 
-      {loading && (
+      {/* Live progress while agent runs */}
+      {(loading || liveCalls.length > 0) && !result && (
         <Card>
-          <div className="p-6 text-sm text-[var(--text-muted)] italic">
-            Claude is calling tools (search_use_case_library, estimate_roi, get_starter_playbook)
-            and reasoning over results. This is multi-turn and takes 20-40 seconds.
+          <div className="p-5 space-y-3">
+            <h3 className="font-semibold text-sm">Agent activity (live)</h3>
+            {progress.length > 0 && (
+              <div className="space-y-1">
+                {progress.map((p, i) => (
+                  <div key={i} className="text-xs text-[var(--text-muted)]">
+                    <span className="text-[var(--accent)]">▸</span> {p}
+                  </div>
+                ))}
+              </div>
+            )}
+            {liveCalls.length > 0 && (
+              <div className="space-y-1.5 pt-2 border-t border-[var(--border)]">
+                <div className="text-xs text-[var(--text-dim)] uppercase tracking-wider">
+                  Tool calls made
+                </div>
+                {liveCalls.map((tc, i) => (
+                  <div key={i} className="text-xs font-mono text-[var(--text-muted)]">
+                    <span className="text-[var(--accent)]">{tc.name}</span>
+                    <span className="text-[var(--text-dim)]">
+                      ({JSON.stringify(tc.input)})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {loading && (
+              <div className="text-xs text-[var(--text-dim)] italic pt-2">
+                Streaming events from the agent — connection stays alive.
+              </div>
+            )}
           </div>
         </Card>
       )}
@@ -177,20 +246,25 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] mb-2">
-                        <span>Complexity: {"●".repeat(uc.complexity)}{"○".repeat(5 - uc.complexity)}</span>
+                        <span>
+                          Complexity: {"●".repeat(uc.complexity)}
+                          {"○".repeat(5 - uc.complexity)}
+                        </span>
                         <span>Time to value: {uc.time_to_first_value_days}d</span>
                       </div>
-                      <div className="text-xs">
-                        <div className="text-[var(--text-dim)] mb-1">First 30 days:</div>
-                        <ul className="space-y-0.5 ml-3">
-                          {uc.first_30_days_plan.map((p, j) => (
-                            <li key={j} className="list-disc text-[var(--text-muted)]">
-                              {p}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      {uc.risks.length > 0 && (
+                      {uc.first_30_days_plan && uc.first_30_days_plan.length > 0 && (
+                        <div className="text-xs">
+                          <div className="text-[var(--text-dim)] mb-1">First 30 days:</div>
+                          <ul className="space-y-0.5 ml-3">
+                            {uc.first_30_days_plan.map((p, j) => (
+                              <li key={j} className="list-disc text-[var(--text-muted)]">
+                                {p}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {uc.risks && uc.risks.length > 0 && (
                         <div className="text-xs mt-2">
                           <div className="text-[var(--text-dim)] mb-1">Risks:</div>
                           <ul className="space-y-0.5 ml-3">
