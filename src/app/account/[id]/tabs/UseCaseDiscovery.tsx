@@ -112,7 +112,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
                 pull starter playbooks. Returns 5-8 prioritized use cases.
               </p>
             </div>
-            <Badge tone="accent">Tool use · Sonnet</Badge>
+            <Badge tone="accent">Tool use + Streaming · Sonnet</Badge>
           </div>
           <div className="space-y-3">
             <textarea
@@ -166,7 +166,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
             {liveCalls.length > 0 && (
               <div className="space-y-1.5 pt-2 border-t border-[var(--border)]">
                 <div className="text-xs text-[var(--text-dim)] uppercase tracking-wider">
-                  Tool calls made
+                  Tools executed (server-orchestrated)
                 </div>
                 {liveCalls.map((tc, i) => (
                   <div key={i} className="text-xs font-mono text-[var(--text-muted)]">
@@ -192,9 +192,19 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
           {result.tool_calls.length > 0 && (
             <Card>
               <div className="p-5">
-                <h3 className="font-semibold text-sm mb-3">
-                  Tool calls Claude made ({result.tool_calls.length})
-                </h3>
+                <div className="flex items-baseline justify-between mb-2">
+                  <h3 className="font-semibold text-sm">
+                    Tools executed by the agent ({result.tool_calls.length})
+                  </h3>
+                  <Badge tone="muted">Server-orchestrated · V1</Badge>
+                </div>
+                <p className="text-xs text-[var(--text-dim)] mb-3">
+                  For reliability under Vercel&apos;s 60s timeout, the agent loop is
+                  server-orchestrated: the server picks the function from the signal, pre-executes
+                  the tool calls below, then Claude makes a single streaming call to synthesize the
+                  recommendation. Same tool-use pattern, fewer round-trips. In a production
+                  deployment we&apos;d let Claude hold the loop itself with a longer timeout budget.
+                </p>
                 <div className="space-y-1.5">
                   {result.tool_calls.map((tc, i) => (
                     <div key={i} className="text-xs font-mono text-[var(--text-muted)]">
