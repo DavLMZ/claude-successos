@@ -1,12 +1,9 @@
 import { anthropic, MODELS } from "@/lib/anthropic";
 import { getAccount } from "@/data/accounts";
-import { PLAYBOOK_COMBINED_SYSTEM } from "@/lib/prompts/playbook";
+import { PLAYBOOK_SYSTEM } from "@/lib/prompts/playbook";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-// V1: Single Claude call that produces initial + critique + revised in one response.
-// Trades real-time per-step progress for guaranteed reliability under Vercel's 60s timeout.
 
 export async function POST(req: Request) {
   const { accountId, motion } = await req.json();
@@ -31,16 +28,19 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
       }
 
       try {
-        emit({ type: "status", message: "Claude is drafting, critiquing, and revising in one pass…" });
+        emit({
+          type: "status",
+          message: "Claude is drafting the playbook and self-reviewing in one pass…",
+        });
 
         const response = await anthropic.messages.create({
-          model: MODELS.SONNET,
-          max_tokens: 6000,
-          system: PLAYBOOK_COMBINED_SYSTEM,
+          model: MODELS.HAIKU,
+          max_tokens: 3500,
+          system: PLAYBOOK_SYSTEM,
           messages: [
             {
               role: "user",
-              content: `Motion: ${motion}\n\n${accountContext}\n\nProduce the combined JSON: initial draft, critique, and revised version.`,
+              content: `Motion: ${motion}\n\n${accountContext}\n\nProduce the playbook JSON.`,
             },
           ],
         });
@@ -52,12 +52,7 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
 
         const parsed = extractJson(text);
 
-        emit({
-          type: "final",
-          initial: parsed.initial,
-          critique: parsed.critique,
-          revised: parsed.revised,
-        });
+        emit({ type: "final", playbook: parsed });
         controller.close();
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : "Unknown error";
@@ -76,7 +71,7 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
   });
 }
 
-function extractJson(text: string): { initial: unknown; critique: unknown; revised: unknown } {
+function extractJson(text: string): Record<string, unknown> {
   const trimmed = text.trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   const jsonStr = fenced ? fenced[1].trim() : trimmed;
