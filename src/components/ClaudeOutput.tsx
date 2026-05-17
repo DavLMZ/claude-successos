@@ -1,11 +1,12 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function ClaudeOutput({ text }: { text: string }) {
   return (
     <div className="prose-claude">
-      <ReactMarkdown>{text}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
     </div>
   );
 }

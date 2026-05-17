@@ -24,13 +24,33 @@ export function AccountBriefTab({ account }: { account: Account }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accountId: account.id }),
       });
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err || `Request failed: ${res.status}`);
+      if (!res.ok || !res.body) {
+        throw new Error(`Request failed: ${res.status}`);
       }
-      const data = await res.json();
-      setThinking(data.thinking ?? "");
-      setBrief(data.brief ?? "");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let thinkingAcc = "";
+      let briefAcc = "";
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line) continue;
+          try {
+            const msg = JSON.parse(line) as { type: "thinking" | "text"; content: string };
+            if (msg.type === "thinking") thinkingAcc += msg.content;
+            else if (msg.type === "text") briefAcc += msg.content;
+          } catch {
+            // skip malformed line
+          }
+        }
+        setThinking(thinkingAcc);
+        setBrief(briefAcc);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -46,17 +66,19 @@ export function AccountBriefTab({ account }: { account: Account }) {
             <div>
               <h2 className="font-semibold mb-1">Account Brief</h2>
               <p className="text-sm text-[var(--text-muted)] max-w-2xl">
-                Claude Opus reasons through the full account state — consumption health, stakeholder
-                sentiment, risk signals, expansion levers — and produces a brief a VP would read
-                before a customer meeting. The extended thinking trace is shown so you can audit the
-                reasoning.
+                Claude Sonnet reasons through the full account state — consumption health,
+                stakeholder sentiment, risk signals, expansion levers — using extended thinking,
+                then streams the brief. A VP could read this in 90 seconds before a customer
+                meeting.
               </p>
             </div>
-            <Badge tone="accent">Extended thinking · Opus</Badge>
+            <Badge tone="accent">Extended thinking + Streaming · Sonnet</Badge>
           </div>
           <Button onClick={generate} disabled={loading}>
             {loading
-              ? "Claude is thinking…"
+              ? brief
+                ? "Streaming…"
+                : "Claude is thinking…"
               : brief
                 ? "Regenerate brief"
                 : "Generate account brief"}
@@ -77,15 +99,18 @@ export function AccountBriefTab({ account }: { account: Account }) {
           <div className="p-6">
             <ThinkingBlock text={thinking} />
             <ClaudeOutput text={brief} />
+            {loading && brief && (
+              <span className="inline-block w-2 h-4 bg-[var(--accent)] animate-pulse ml-1" />
+            )}
           </div>
         </Card>
       )}
 
-      {loading && !brief && (
+      {loading && !brief && !thinking && (
         <Card>
           <div className="p-6 text-sm text-[var(--text-muted)] italic">
-            Claude is analyzing 90 days of consumption data, 6 stakeholder relationships, and 7 use
-            cases. Extended thinking takes 15-30 seconds.
+            Claude is reasoning through 90 days of consumption data, 6 stakeholder relationships,
+            and 7 use cases. Thinking takes 5-10 seconds, then the brief streams in.
           </div>
         </Card>
       )}
