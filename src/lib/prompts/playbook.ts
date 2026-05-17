@@ -12,6 +12,51 @@ export type PlaybookMotion =
   | "Developer Onboarding (Claude Code)"
   | "CfE Seat Activation Campaign";
 
+export const PLAYBOOK_COMBINED_SYSTEM = `You are an enterprise change management strategist at Anthropic, AND the skeptical VP who will critique that strategist's work, AND the strategist again revising based on the critique.
+
+In a SINGLE response, produce all three outputs as one JSON object with this exact shape:
+
+{
+  "initial": {
+    "motion": string,
+    "executive_summary": string (2-3 sentences),
+    "success_metrics": [ { "metric": string, "target": string, "measurement_method": string } ],
+    "day_30": [ { "milestone": string, "owner_role": string, "artifacts": [string] } ],
+    "day_60": [ { "milestone": string, "owner_role": string, "artifacts": [string] } ],
+    "day_90": [ { "milestone": string, "owner_role": string, "artifacts": [string] } ],
+    "templates_needed": [ { "name": string, "purpose": string, "audience": string } ],
+    "risks": [ { "risk": string, "mitigation": string } ]
+  },
+  "critique": {
+    "scores": {
+      "clarity": number (1-5),
+      "measurability": number (1-5),
+      "executive_readiness": number (1-5),
+      "realism": number (1-5),
+      "specificity": number (1-5)
+    },
+    "average": number,
+    "top_fixes": [ { "section": string, "issue": string, "fix": string } ]
+  },
+  "revised": {
+    "motion": string,
+    "executive_summary": string,
+    "success_metrics": [ ... same shape as initial ... ],
+    "day_30": [ ... ],
+    "day_60": [ ... ],
+    "day_90": [ ... ],
+    "templates_needed": [ ... ],
+    "risks": [ ... ]
+  }
+}
+
+Process:
+1. INITIAL: Draft a 30/60/90 playbook for a 100,000-employee matrixed tech org. Generic plans get rejected by VPs. Owners must be roles, not names. Every milestone must have a measurable outcome. Keep each section to 3-4 items max — concise beats exhaustive.
+2. CRITIQUE: Score the initial 1-5 on clarity, measurability, executive_readiness, realism, specificity. Be tough — flag 2-4 specific fixes a CSM would rather hear from you than from the customer. Compute average rounded to 1 decimal.
+3. REVISED: Apply the fixes from the critique to the initial playbook. Preserve original intent. Output as the same shape as initial.
+
+Output ONLY the JSON object inside a \`\`\`json fenced block. No commentary before or after.`;
+
 export const PLAYBOOK_PLANNER_SYSTEM = `You are an enterprise change management strategist working at Anthropic.
 
 Given a customer motion (e.g. "Train the Trainer", "Center of Excellence"), produce a 30/60/90 day plan for a 100,000-employee Digital Native Business.

@@ -1,13 +1,12 @@
 import { anthropic, MODELS } from "@/lib/anthropic";
 import { getAccount } from "@/data/accounts";
-import {
-  PLAYBOOK_PLANNER_SYSTEM,
-  PLAYBOOK_CRITIC_SYSTEM,
-  PLAYBOOK_REVISER_SYSTEM,
-} from "@/lib/prompts/playbook";
+import { PLAYBOOK_COMBINED_SYSTEM } from "@/lib/prompts/playbook";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+// V1: Single Claude call that produces initial + critique + revised in one response.
+// Trades real-time per-step progress for guaranteed reliability under Vercel's 60s timeout.
 
 export async function POST(req: Request) {
   const { accountId, motion } = await req.json();
@@ -32,59 +31,32 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
       }
 
       try {
-        // STEP 1: Plan
-        emit({ type: "status", message: "Step 1/3 — Drafting initial playbook" });
-        const plan = await anthropic.messages.create({
-          model: MODELS.HAIKU,
-          max_tokens: 2500,
-          system: PLAYBOOK_PLANNER_SYSTEM,
-          messages: [
-            {
-              role: "user",
-              content: `Motion: ${motion}\n\n${accountContext}\n\nGenerate the playbook JSON.`,
-            },
-          ],
-        });
-        const initial = JSON.parse(extractJson(plan.content[0]));
-        emit({ type: "step_complete", step: "initial", data: initial });
+        emit({ type: "status", message: "Claude is drafting, critiquing, and revising in one pass…" });
 
-        // STEP 2: Critique (use Sonnet not Opus for speed under timeout)
-        emit({ type: "status", message: "Step 2/3 — Critiquing as a skeptical VP" });
-        const critique = await anthropic.messages.create({
-          model: MODELS.HAIKU,
-          max_tokens: 1500,
-          system: PLAYBOOK_CRITIC_SYSTEM,
+        const response = await anthropic.messages.create({
+          model: MODELS.SONNET,
+          max_tokens: 6000,
+          system: PLAYBOOK_COMBINED_SYSTEM,
           messages: [
             {
               role: "user",
-              content: `Playbook to critique:\n\n${JSON.stringify(initial, null, 2)}\n\nAccount context:\n${accountContext}`,
+              content: `Motion: ${motion}\n\n${accountContext}\n\nProduce the combined JSON: initial draft, critique, and revised version.`,
             },
           ],
         });
-        const critiqueData = JSON.parse(extractJson(critique.content[0]));
-        emit({ type: "step_complete", step: "critique", data: critiqueData });
 
-        // STEP 3: Revise
-        emit({ type: "status", message: "Step 3/3 — Revising based on critique" });
-        const revise = await anthropic.messages.create({
-          model: MODELS.HAIKU,
-          max_tokens: 2500,
-          system: PLAYBOOK_REVISER_SYSTEM,
-          messages: [
-            {
-              role: "user",
-              content: `Original playbook:\n${JSON.stringify(initial, null, 2)}\n\nCritic feedback to apply:\n${JSON.stringify(critiqueData, null, 2)}\n\nReturn the revised playbook as JSON only.`,
-            },
-          ],
-        });
-        const revised = JSON.parse(extractJson(revise.content[0]));
-        emit({ type: "step_complete", step: "revised", data: revised });
+        const text = response.content
+          .filter((b) => b.type === "text")
+          .map((b) => (b as { type: "text"; text: string }).text)
+          .join("");
+
+        const parsed = extractJson(text);
 
         emit({
           type: "final",
-          initial,
-          critique: critiqueData,
-          revised,
+          initial: parsed.initial,
+          critique: parsed.critique,
+          revised: parsed.revised,
         });
         controller.close();
       } catch (e: unknown) {
@@ -104,17 +76,18 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
   });
 }
 
-function extractJson(block: { type: string; text?: string }): string {
-  if (block.type !== "text" || !block.text) {
-    throw new Error("Expected text block from Claude");
+function extractJson(text: string): { initial: unknown; critique: unknown; revised: unknown } {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const jsonStr = fenced ? fenced[1].trim() : trimmed;
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    const start = jsonStr.indexOf("{");
+    const end = jsonStr.lastIndexOf("}");
+    if (start === -1 || end === -1) {
+      throw new Error("Could not find JSON object in Claude's response");
+    }
+    return JSON.parse(jsonStr.slice(start, end + 1));
   }
-  const text = block.text.trim();
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (fenced) return fenced[1].trim();
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1) {
-    throw new Error("Could not find JSON in response");
-  }
-  return text.slice(start, end + 1);
 }
