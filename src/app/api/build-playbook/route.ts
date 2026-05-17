@@ -35,7 +35,7 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
         // STEP 1: Plan
         emit({ type: "status", message: "Step 1/3 — Drafting initial playbook" });
         const plan = await anthropic.messages.create({
-          model: MODELS.SONNET,
+          model: MODELS.HAIKU,
           max_tokens: 2500,
           system: PLAYBOOK_PLANNER_SYSTEM,
           messages: [
@@ -51,7 +51,7 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
         // STEP 2: Critique (use Sonnet not Opus for speed under timeout)
         emit({ type: "status", message: "Step 2/3 — Critiquing as a skeptical VP" });
         const critique = await anthropic.messages.create({
-          model: MODELS.SONNET,
+          model: MODELS.HAIKU,
           max_tokens: 1500,
           system: PLAYBOOK_CRITIC_SYSTEM,
           messages: [
@@ -67,7 +67,7 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
         // STEP 3: Revise
         emit({ type: "status", message: "Step 3/3 — Revising based on critique" });
         const revise = await anthropic.messages.create({
-          model: MODELS.SONNET,
+          model: MODELS.HAIKU,
           max_tokens: 2500,
           system: PLAYBOOK_REVISER_SYSTEM,
           messages: [

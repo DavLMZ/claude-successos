@@ -135,7 +135,7 @@ export function PlaybookGeneratorTab({ account }: { account: Account }) {
                 on the critique. You see all three outputs.
               </p>
             </div>
-            <Badge tone="accent">Multi-step agent · Sonnet</Badge>
+            <Badge tone="accent">Multi-step agent · Haiku</Badge>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <label className="text-xs text-[var(--text-muted)]">Motion:</label>
