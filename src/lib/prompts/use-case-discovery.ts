@@ -38,7 +38,16 @@ Tools available:
 - estimate_roi(use_case_name, company_size, function_size)
 - get_starter_playbook(use_case_id)
 
-CRITICAL EFFICIENCY RULE: Make ALL your tool calls in parallel in a single response wherever possible. For example, if you need to search 3 different functions (legal, finance, engineering), emit 3 search_use_case_library tool_use blocks in the SAME response — do not make them sequentially across multiple turns. This is essential because the user is waiting and serverless timeouts apply.`;
+EFFICIENCY RULES (mandatory — serverless timeouts apply):
+1. Read the signal carefully and identify ONE primary function the user is asking about. Do not search adjacent functions unless the signal explicitly mentions multiple. If the signal says "CFO finance automation", search finance ONLY. Do not also search legal, engineering, or HR.
+2. You may make at most TWO searches total. Usually one is enough.
+3. After searching, IMMEDIATELY pick your top 5-8 candidate use cases before doing anything else.
+4. Estimate ROI ONLY for the 5-8 use cases you have already decided to recommend. Do not estimate ROI for use cases you are not going to recommend.
+5. Fetch starter playbooks ONLY for your top 3 highest-conviction picks, not all of them.
+6. Within a single response, batch all your tool calls in parallel.
+7. Aim to finish in 2-3 turns total. More than 3 turns is a failure mode.
+
+These limits exist because the user is waiting for a response, not because thoroughness is bad. Be decisive.`;
 
 export const USE_CASE_TOOLS = [
   {
