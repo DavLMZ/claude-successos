@@ -10,11 +10,11 @@ Every screen is operating software for a Strategic CSM:
 
 - **Account Cockpit** — portfolio view of 3 synthetic Digital Native Business accounts
 - **Account Detail** — adoption stage, consumption & seat dashboards, stakeholder map, risk signals, expansion levers, full use case portfolio
-- **Account Brief** — Claude Opus with **extended thinking** produces a VP-ready brief, reasoning trace visible
+- **Account Brief** — Claude Sonnet with **extended thinking + streaming** produces a VP-ready brief, reasoning trace visible
 - **QBR Composer** — Claude Sonnet **streams** a full Quarterly Business Review
-- **Use Case Discovery Agent** — Claude with **tool use** queries a simulated use case library, estimates ROI, returns prioritized recommendations
+- **Use Case Discovery Agent** — Claude with **tool use** (server-orchestrated for reliability under Vercel's 60s timeout) queries a simulated use case library, estimates ROI, returns prioritized recommendations
 - **Value Realization Ledger** — every realized outcome with baseline, current, $ value, validation source
-- **Change Management Playbook Generator** — **multi-step agent** (plan → critique → revise) producing Train-the-Trainer, Center of Excellence, executive briefing, and seat activation playbooks
+- **Change Management Playbook Generator** — Claude Haiku produces a 30/60/90 playbook AND a built-in VP self-review in a **single self-reviewing pass** (Train-the-Trainer, Center of Excellence, executive briefing, seat activation, developer onboarding)
 - **Pricing Translator** — turns the most-common customer confusion ("I already pay for Claude — why a separate API bill?") into a clear explainer
 
 See `/about` in the running app for a JD-line-to-app-feature mapping.
@@ -23,17 +23,17 @@ See `/about` in the running app for a JD-line-to-app-feature mapping.
 
 | Capability | Where | Why |
 |---|---|---|
-| Extended thinking | Account Brief | Ambiguous signal interpretation — reviewers see Claude reason through trade-offs |
-| Streaming | QBR Composer, Pricing Translator | Long-form structured output — perceived latency matters |
-| Tool use | Use Case Discovery | Simulates agentic integration with internal systems |
-| Multi-step agent | Playbook Generator | Plan → critique → revise produces enterprise-grade artifacts |
-| Model selection | Throughout | Opus for ambiguity, Sonnet everywhere else, documented per prompt |
+| Extended thinking + streaming | Account Brief | Ambiguous signal interpretation — reviewers see Claude reason through trade-offs live |
+| Streaming | Account Brief, QBR Composer, Use Case Discovery, Pricing Translator | Long-form structured output — perceived latency matters |
+| Tool use | Use Case Discovery | Simulates agentic integration with internal systems (server-orchestrated in V1 for timeout reliability — see About page) |
+| Self-reviewing single-pass generation | Playbook Generator | Claude drafts AND self-critiques in one Haiku call — agentic pattern without multi-call timeout fragility |
+| Model selection | Throughout | Sonnet 4.5 for nuanced reasoning, Haiku 4.5 for fast structured generation, documented per prompt |
 
 ## Stack
 
 - Next.js 16 (App Router) · TypeScript · Tailwind 4
-- `@anthropic-ai/sdk` · Claude Opus 4.5 + Sonnet 4.5
-- Recharts · react-markdown
+- `@anthropic-ai/sdk` · Claude Sonnet 4.5 + Claude Haiku 4.5
+- Recharts · react-markdown · remark-gfm
 - Hosted on Vercel
 
 ## Run locally
@@ -61,10 +61,10 @@ src/
 │   ├── pricing-translator/page.tsx       Standalone pricing translator
 │   ├── about/page.tsx                    JD mapping
 │   └── api/
-│       ├── analyze-account/              Extended thinking
+│       ├── analyze-account/              Extended thinking + streaming
 │       ├── generate-qbr/                 Streaming
-│       ├── discover-use-cases/           Tool use loop
-│       ├── build-playbook/               Multi-step agent
+│       ├── discover-use-cases/           Tool use (server-orchestrated) + streaming
+│       ├── build-playbook/               Self-reviewing single-pass (Haiku)
 │       └── pricing-translator/           Streaming
 ├── components/
 │   ├── ui/                               Card, Button, Badge

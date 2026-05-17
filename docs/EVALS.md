@@ -26,25 +26,35 @@ Quick eval log — what I tested, what I tuned, what gaps remain. Not a full eva
 
 ## Use Case Discovery
 
-**Test cases run:** Helix "CFO wants finance automation", Helix "Engineering reorg", Northwind "HR exploration".
+**Test cases run:** Helix "CFO wants finance automation", Helix "Engineering reorg", Helix "HR exploration", Helix "Legal blocking expansion".
+
+**Architecture evolution (shipped in V1):**
+- v1: Multi-turn agent loop where Claude held the loop and made tool calls across multiple turns. Hit Vercel 60s timeout reliably — Claude was making 18+ sequential tool calls.
+- v2: Tightened prompt to enforce parallel tool calls + max turns. Reduced calls but still hit timeout when Claude's final synthesis turn was slow.
+- v3 (shipped): Server-orchestrated tool execution. Server infers the target function from the signal, executes search + ROI + playbook tools synchronously, then makes one streaming Claude call to synthesize. ~15-20s reliably. Tool use pattern preserved, only loop ownership changed. Documented inline in the UI.
 
 **Tuned:**
 - Added "include at least one Claude Code use case" rule after early runs only returned API + CfE suggestions.
 - Added explicit "time-to-first-value < 60 days beats 6-month bets" priority.
 - Tool result schemas were initially too sparse — added `assumptions` block to `estimate_roi` so the narrative can cite the math.
 
-**Gap:** Tool library only covers 6 functions. Real product would query a much larger taxonomy.
+**Gap:** Function extraction uses keyword matching. A real product would use a Haiku call to extract function + secondary signals from the signal text.
 
 ## Playbook Generator
 
-**Test cases run:** Helix Train-the-Trainer, Helix Center of Excellence, Northwind CfE Seat Activation Campaign.
+**Test cases run:** Helix Train-the-Trainer, Helix Center of Excellence, Helix Executive Briefing.
 
-**Tuned:**
-- Critic was originally too gentle — added "be tough. The CSM would rather hear it from you than the customer."
-- Reviser was wrapping output in commentary — switched to "Return the revised playbook as JSON only — no commentary."
+**Architecture evolution (shipped in V1):**
+- v1: 3 separate Claude calls (planner Sonnet → critic Opus → reviser Sonnet). Hit Vercel 60s timeout in ~40% of runs.
+- v2: Same 3 calls but all Sonnet. Still timed out occasionally on the planner step alone.
+- v3 (shipped): Single Haiku call producing playbook + built-in VP self-review. ~10-15s reliably. Same agentic intent in one round-trip.
+
+**Tuned in current single-pass version:**
+- Originally returned long-winded reviews — added "name 3 specific weaknesses" to force concrete pushback.
 - Planner was producing generic owners ("the team") — explicit rule: "Owners must be roles, not names" with example.
+- JSON schema reduced to 3-4 items per section after initial outputs were exhaustive but not skimmable.
 
-**Gap:** Doesn't yet preserve the original draft's intent during revision — sometimes critic feedback prompts wholesale rewrites. Would benefit from a structured diff.
+**Gap:** Self-critique is less sharp than a separate Opus critic call would be. With longer timeout budget (Pro tier or background jobs), would revert to 3-call architecture.
 
 ## Pricing Translator
 

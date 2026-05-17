@@ -115,9 +115,9 @@ export default function Home() {
           </p>
           <p>
             Every interactive module uses Claude — extended thinking for account briefs, streaming
-            for QBR generation, tool use for use case discovery, multi-step agent patterns for
-            playbook generation. See <Link href="/about" className="underline">/about</Link> for the
-            mapping.
+            for QBR generation, tool use for use case discovery, self-reviewing single-pass
+            generation for playbooks. See <Link href="/about" className="underline">/about</Link>{" "}
+            for the mapping.
           </p>
         </div>
       </Card>

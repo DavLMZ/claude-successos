@@ -21,7 +21,7 @@ const TABS: { id: TabId; label: string; claudeFeature?: string }[] = [
   { id: "qbr", label: "QBR Composer", claudeFeature: "Streaming" },
   { id: "use-cases", label: "Use Case Discovery", claudeFeature: "Tool use" },
   { id: "value", label: "Value Ledger" },
-  { id: "playbook", label: "Change Mgmt Playbook", claudeFeature: "Multi-step agent" },
+  { id: "playbook", label: "Change Mgmt Playbook", claudeFeature: "Self-reviewing draft" },
 ];
 
 export function AccountDetailClient({ account }: { account: Account }) {

@@ -25,7 +25,7 @@ const JD_MAP: { jdQuote: string; appProof: string; where: string }[] = [
   },
   {
     jdQuote: "Develop and execute change management strategies... Train the Trainer programs, Center of Excellence development",
-    appProof: "Change Management Playbook Generator with 5 motion types. Multi-step agent: plan → critique → revise.",
+    appProof: "Change Management Playbook Generator with 5 motion types. Single-pass agent that drafts and self-reviews in one Claude call.",
     where: "Account detail · Change Mgmt Playbook",
   },
   {
@@ -35,7 +35,7 @@ const JD_MAP: { jdQuote: string; appProof: string; where: string }[] = [
   },
   {
     jdQuote: "Strategic mindset to identify growth opportunities and translate them into actionable expansion plans",
-    appProof: "Account Brief uses Claude Opus extended thinking to reason through expansion theses with explicit risks.",
+    appProof: "Account Brief uses Claude Sonnet with extended thinking to reason through expansion theses with explicit risks. Streamed live.",
     where: "Account detail · Account Brief",
   },
   {
@@ -51,12 +51,12 @@ const JD_MAP: { jdQuote: string; appProof: string; where: string }[] = [
 ];
 
 const CLAUDE_CAPABILITIES = [
-  { name: "Extended thinking", where: "Account Brief", why: "Multi-dimensional account analysis benefits from visible chain-of-reasoning. Reviewers can audit the trace." },
-  { name: "Streaming", where: "QBR Composer, Pricing Translator", why: "Long-form structured documents — perceived latency matters when CSMs draft 10+ QBRs per quarter." },
-  { name: "Tool use (function calling)", where: "Use Case Discovery", why: "Simulates the agentic pattern that production CS apps need — Claude querying internal systems then reasoning over results." },
-  { name: "Multi-step agent (plan → critique → revise)", where: "Playbook Generator", why: "The pattern that produces enterprise-grade artifacts. Critic is Opus for sharpness; planner + reviser are Sonnet for cost." },
-  { name: "Model selection (Opus vs Sonnet)", where: "Throughout", why: "Opus for ambiguous reasoning (Account Brief, Playbook Critic); Sonnet everywhere else. Documented in each prompt file header." },
-  { name: "Structured outputs (JSON)", where: "Playbook Generator", why: "Enables rich, typed UI rendering downstream. Schema in the system prompt; extraction in the route handler." },
+  { name: "Extended thinking", where: "Account Brief", why: "Multi-dimensional account analysis benefits from visible chain-of-reasoning. Sonnet 4.5 with thinking enabled, streamed live so reviewers see the reasoning trace appear in real time." },
+  { name: "Streaming", where: "Account Brief, QBR Composer, Pricing Translator, Use Case Discovery", why: "Long-form structured documents — perceived latency matters when CSMs draft 10+ QBRs per quarter. Every long-form module streams." },
+  { name: "Tool use (function calling)", where: "Use Case Discovery", why: "Simulates the agentic pattern that production CS apps need — querying internal systems then reasoning over results. V1 ships with server-orchestrated tool execution (documented inline) for reliability under Vercel's 60s timeout." },
+  { name: "Self-reviewing single-pass generation", where: "Playbook Generator", why: "Claude drafts AND self-critiques in a single Haiku call (~10-15s). The self-review surfaces what a skeptical VP would push back on — agentic pattern without multi-call timeout fragility." },
+  { name: "Model selection (Sonnet vs Haiku)", where: "Throughout", why: "Sonnet 4.5 for nuanced reasoning (Account Brief, QBR, Use Case synthesis, Pricing); Haiku 4.5 for fast structured generation (Playbook). Each prompt file documents the choice." },
+  { name: "Structured outputs (JSON)", where: "Playbook Generator, Use Case Discovery", why: "Enables rich, typed UI rendering downstream. Schema in the system prompt; extraction in the route handler with fenced-block + fallback parsing." },
 ];
 
 export default function AboutPage() {
@@ -170,7 +170,7 @@ export default function AboutPage() {
           <h2 className="font-semibold mb-3">Stack</h2>
           <div className="text-sm text-[var(--text-muted)] space-y-1">
             <div>Next.js 16 (App Router) · TypeScript · Tailwind 4 · Recharts</div>
-            <div>Anthropic SDK · Claude Opus 4.5 + Claude Sonnet 4.5</div>
+            <div>Anthropic SDK · Claude Sonnet 4.5 + Claude Haiku 4.5</div>
             <div>Hosted on Vercel · Source on GitHub</div>
           </div>
         </div>
