@@ -1,65 +1,126 @@
-import Image from "next/image";
+import { AccountCard } from "@/components/AccountCard";
+import { ACCOUNTS } from "@/data/accounts";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { formatCurrency } from "@/lib/utils";
+import Link from "next/link";
 
 export default function Home() {
+  const totalACV = ACCOUNTS.reduce((s, a) => s + a.contractValue, 0);
+  const totalRealizedValue = ACCOUNTS.reduce(
+    (s, a) => s + a.valueRealized.reduce((sum, v) => sum + v.dollarValue, 0),
+    0,
+  );
+  const highRisks = ACCOUNTS.flatMap((a) =>
+    a.risks.filter((r) => r.level === "high").map((r) => ({ ...r, account: a.name, id: a.id })),
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="mb-8">
+        <div className="flex items-baseline gap-3 mb-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Account Cockpit</h1>
+          <span className="text-sm text-[var(--text-dim)]">3 strategic DNB accounts</span>
+        </div>
+        <p className="text-sm text-[var(--text-muted)] max-w-3xl">
+          The COO desk for your Claude customers. Every signal from{" "}
+          <span className="text-[var(--accent-soft)]">API consumption</span>,{" "}
+          <span className="text-[var(--accent-soft)]">Claude for Enterprise</span> seats, and{" "}
+          <span className="text-[var(--accent-soft)]">Claude Code</span> activation rolls up here.
+          Click into an account for the full operating system.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <Card>
+          <div className="p-5">
+            <div className="text-xs text-[var(--text-dim)] mb-1">Portfolio ACV</div>
+            <div className="text-2xl font-semibold">{formatCurrency(totalACV)}</div>
+            <div className="text-[10px] text-[var(--text-dim)] mt-1">
+              Across {ACCOUNTS.length} accounts
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-5">
+            <div className="text-xs text-[var(--text-dim)] mb-1">Value realized (LTM)</div>
+            <div className="text-2xl font-semibold text-[var(--green)]">
+              {formatCurrency(totalRealizedValue)}
+            </div>
+            <div className="text-[10px] text-[var(--text-dim)] mt-1">
+              Validated, evidence-backed
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div className="p-5">
+            <div className="text-xs text-[var(--text-dim)] mb-1">High-severity risks</div>
+            <div className="text-2xl font-semibold text-[var(--red)]">{highRisks.length}</div>
+            <div className="text-[10px] text-[var(--text-dim)] mt-1">
+              Requiring CSM attention this week
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+        {ACCOUNTS.map((account) => (
+          <AccountCard key={account.id} account={account} />
+        ))}
+      </div>
+
+      {highRisks.length > 0 && (
+        <Card className="mb-8">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold">This week&apos;s risk watchlist</h2>
+              <Badge tone="red">{highRisks.length} high</Badge>
+            </div>
+            <div className="space-y-2">
+              {highRisks.map((r, i) => (
+                <Link
+                  key={i}
+                  href={`/account/${r.id}`}
+                  className="flex items-start gap-3 p-3 rounded-md hover:bg-[var(--bg-elev)] transition-colors"
+                >
+                  <Badge tone="red">{r.account}</Badge>
+                  <div className="text-sm">
+                    <div className="font-medium">{r.label}</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5">{r.detail}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <Card>
+        <div className="p-5 text-sm text-[var(--text-muted)]">
+          <div className="font-semibold text-[var(--text)] mb-2">About this app</div>
+          <p className="mb-2">
+            Claude SuccessOS is a working prototype built for the{" "}
             <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="https://job-boards.greenhouse.io/anthropic/jobs/5082455008"
+              target="_blank"
+              rel="noopener"
+              className="text-[var(--accent-soft)] hover:underline"
             >
-              Templates
+              Customer Success Manager, Strategics
             </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+            application at Anthropic. It maps to the role&apos;s requirements: driving adoption across
+            the three Claude surfaces (API, Claude for Enterprise, Claude Code), running both
+            consumption- and seat-based motions, quantifying value, and operating change management
+            at 100k-employee scale.
+          </p>
+          <p>
+            Every interactive module uses Claude — extended thinking for account briefs, streaming
+            for QBR generation, tool use for use case discovery, multi-step agent patterns for
+            playbook generation. See <Link href="/about" className="underline">/about</Link> for the
+            mapping.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </Card>
     </div>
   );
 }
