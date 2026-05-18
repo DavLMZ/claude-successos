@@ -99,19 +99,11 @@ export default function Home() {
         <div className="p-5 text-sm text-[var(--text-muted)]">
           <div className="font-semibold text-[var(--text)] mb-2">About this app</div>
           <p className="mb-2">
-            Claude SuccessOS is a working prototype built for the{" "}
-            <a
-              href="https://job-boards.greenhouse.io/anthropic/jobs/5082455008"
-              target="_blank"
-              rel="noopener"
-              className="text-[var(--accent-soft)] hover:underline"
-            >
-              Customer Success Manager, Strategics
-            </a>{" "}
-            application at Anthropic. It maps to the role&apos;s requirements: driving adoption across
-            the three Claude surfaces (API, Claude for Enterprise, Claude Code), running both
-            consumption- and seat-based motions, quantifying value, and operating change management
-            at 100k-employee scale.
+            Claude SuccessOS is a Customer Success command centre for teams adopting Claude. It is
+            built around the operating realities of a Strategic CSM: driving adoption across the
+            three Claude surfaces (API, Claude for Enterprise, Claude Code), running both
+            consumption- and seat-based motions in the same account, quantifying value with
+            CFO-ready evidence, and executing change management at enterprise scale.
           </p>
           <p>
             Every interactive module uses Claude — extended thinking for account briefs, streaming
