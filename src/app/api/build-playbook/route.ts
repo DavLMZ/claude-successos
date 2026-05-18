@@ -35,12 +35,12 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
 
         const response = await anthropic.messages.create({
           model: MODELS.HAIKU,
-          max_tokens: 3500,
+          max_tokens: 2500,
           system: PLAYBOOK_SYSTEM,
           messages: [
             {
               role: "user",
-              content: `Motion: ${motion}\n\n${accountContext}\n\nProduce the playbook JSON.`,
+              content: `Motion: ${motion}\n\n${accountContext}\n\nProduce the playbook JSON. Be concise — 2-3 items per section max, short strings.`,
             },
           ],
         });

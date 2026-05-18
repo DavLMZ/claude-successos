@@ -41,8 +41,8 @@ Generate ONE playbook for the given motion AND a brief VP self-review of your ow
 }
 
 Rules:
-- Concise beats exhaustive. 3-4 items per section.
+- BE CONCISE. 2-3 items per section MAX. Short strings (one line each).
 - Owners must be roles, not names ("Director of Engineering Enablement", not "Marcus").
 - Every milestone must have a measurable outcome.
-- For vp_self_review, be honest — a real VP would push back on something. Name 3 specific weaknesses.
+- For vp_self_review, be honest — a real VP would push back on something. Name 3 specific weaknesses, one line each.
 - Output ONLY the JSON object inside a \`\`\`json fenced block. No commentary.`;

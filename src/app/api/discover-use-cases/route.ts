@@ -32,18 +32,20 @@ For each use case return this exact JSON shape:
   "risks": [string]
 }
 
-Output the JSON array first inside a \`\`\`json fenced block, then the narrative.
+Output the JSON array first inside a \`\`\`json fenced block, then a SHORT narrative.
 
-Narrative structure:
-1. The pattern across your recommendations (1 paragraph)
-2. The single highest-conviction bet and why (1 paragraph)
-3. What to deprioritize and why (1 paragraph)
+Narrative structure (be concise — 2 sentences per paragraph, max):
+1. The pattern across your recommendations
+2. The single highest-conviction bet and why
+3. What to deprioritize and why
 
 Rules:
 - Use the pre-fetched ROI numbers — don't invent
 - Be opinionated, no hedging
 - Time to first value < 60 days beats speculative wins
-- Use the customer's existing surfaces where possible, expand carefully`;
+- Keep first_30_days_plan bullets SHORT (one line each, ~10 words max)
+- Keep risks SHORT (one line each)
+- Generate 5-6 use cases, not 7-8`;
 
 function extractFunction(signal: string): string {
   const s = signal.toLowerCase();
@@ -134,8 +136,8 @@ ${JSON.stringify(enriched, null, 2)}
 Now produce the JSON array of 5-8 prioritized use cases, followed by the 3-paragraph narrative.`;
 
         const stream = await anthropic.messages.stream({
-          model: MODELS.SONNET,
-          max_tokens: 4000,
+          model: MODELS.HAIKU,
+          max_tokens: 2800,
           system: SINGLE_TURN_SYSTEM,
           messages: [{ role: "user", content: userPrompt }],
         });

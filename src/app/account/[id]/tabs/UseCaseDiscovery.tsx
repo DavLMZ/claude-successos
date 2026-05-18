@@ -112,7 +112,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
                 pull starter playbooks. Returns 5-8 prioritized use cases.
               </p>
             </div>
-            <Badge tone="accent">Tool use + Streaming · Sonnet</Badge>
+            <Badge tone="accent">Tool use + Streaming · Haiku</Badge>
           </div>
           <div className="space-y-3">
             <textarea
