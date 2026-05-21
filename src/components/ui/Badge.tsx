@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 
-type Tone = "default" | "accent" | "green" | "amber" | "red" | "blue" | "muted";
+type Tone = "default" | "accent" | "green" | "amber" | "red" | "blue" | "muted"
+  | "eleven-agents" | "eleven-creative" | "eleven-api";
 
 const toneClasses: Record<Tone, string> = {
   default: "bg-[var(--bg-elev)] text-[var(--text)] border-[var(--border)]",
@@ -10,6 +11,9 @@ const toneClasses: Record<Tone, string> = {
   red: "bg-[var(--red)]/15 text-[var(--red)] border-[var(--red)]/30",
   blue: "bg-[var(--blue)]/15 text-[var(--blue)] border-[var(--blue)]/30",
   muted: "bg-[var(--bg-elev)] text-[var(--text-muted)] border-[var(--border)]",
+  "eleven-agents":   "bg-[var(--eleven-agents)]/15 text-[var(--eleven-agents)] border-[var(--eleven-agents)]/30",
+  "eleven-creative": "bg-[var(--eleven-creative)]/15 text-[var(--eleven-creative)] border-[var(--eleven-creative)]/30",
+  "eleven-api":      "bg-[var(--eleven-api)]/15 text-[var(--eleven-api)] border-[var(--eleven-api)]/30",
 };
 
 export function Badge({

@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
 type Motion =
-  | "Train the Trainer"
-  | "Center of Excellence"
-  | "Executive Briefing"
-  | "Developer Onboarding (Claude Code)"
-  | "CfE Seat Activation Campaign";
+  | "First 30 Days — Agent Deployment"
+  | "First 30 Days — API Integration"
+  | "First 30 Days — Creative Onboarding"
+  | "Seat Activation Campaign"
+  | "Executive Alignment & Champion Development"
+  | "Expansion: New Product Introduction"
+  | "GDPR / EU AI Act Compliance Unblock";
 
 interface PlaybookData {
   motion: string;
@@ -36,15 +38,17 @@ interface PlaybookData {
 }
 
 const MOTIONS: Motion[] = [
-  "Train the Trainer",
-  "Center of Excellence",
-  "Executive Briefing",
-  "Developer Onboarding (Claude Code)",
-  "CfE Seat Activation Campaign",
+  "First 30 Days — Agent Deployment",
+  "First 30 Days — API Integration",
+  "First 30 Days — Creative Onboarding",
+  "Seat Activation Campaign",
+  "Executive Alignment & Champion Development",
+  "Expansion: New Product Introduction",
+  "GDPR / EU AI Act Compliance Unblock",
 ];
 
 export function PlaybookGeneratorTab({ account }: { account: Account }) {
-  const [motion, setMotion] = useState<Motion>("Train the Trainer");
+  const [motion, setMotion] = useState<Motion>("First 30 Days — Agent Deployment");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<string[]>([]);
   const [playbook, setPlaybook] = useState<PlaybookData | null>(null);
@@ -108,11 +112,12 @@ export function PlaybookGeneratorTab({ account }: { account: Account }) {
         <div className="p-5">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
-              <h2 className="font-semibold mb-1">Change Management Playbook Generator</h2>
+              <h2 className="font-semibold mb-1">Adoption Playbook Generator</h2>
               <p className="text-sm text-[var(--text-muted)] max-w-2xl">
-                Claude drafts a 30/60/90 playbook AND a VP self-review of its own work in a single
-                pass. The self-review surfaces what a skeptical Director would push back on — the
-                kind of guard rail a CSM wants before forwarding the playbook to a customer exec.
+                Claude drafts a 30/60/90 day ElevenLabs adoption playbook AND self-reviews its own
+                work in a single pass. The self-review surfaces what a skeptical VP of CS (think
+                Vanessa Piacente) would push back on — so you don&apos;t forward a weak playbook
+                to a customer exec.
               </p>
             </div>
             <Badge tone="accent">Self-reviewing draft · Haiku</Badge>

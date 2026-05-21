@@ -1,32 +1,37 @@
-export type AdoptionStage = "Explore" | "First Build" | "Scale" | "Embed" | "Expand";
+export type AdoptionStage =
+  | "First Build"
+  | "Production"
+  | "Expanding"
+  | "Champion"
+  | "Strategic";
 
 export const ADOPTION_STAGES: AdoptionStage[] = [
-  "Explore",
   "First Build",
-  "Scale",
-  "Embed",
-  "Expand",
+  "Production",
+  "Expanding",
+  "Champion",
+  "Strategic",
 ];
 
 export const STAGE_DESCRIPTIONS: Record<AdoptionStage, string> = {
-  Explore:
-    "POC phase. Small group testing Claude on bounded problems. Goal: prove value, find a champion.",
   "First Build":
-    "First production use case shipped. One team, one workflow. Goal: stabilize, measure, document wins.",
-  Scale:
-    "Multiple teams using Claude in production. Goal: drive consistency, reduce prompt sprawl, optimize cost.",
-  Embed:
-    "Claude integrated into core workflows. Removing Claude would degrade business outcomes. Goal: deepen, harden.",
-  Expand:
-    "Net-new lines of business adopting Claude. Goal: replicate playbook across the org.",
+    "0-30 days. First voice or agent deployed in a sandbox. Goal: prove value, find a champion, establish baseline.",
+  Production:
+    "31-60 days. Live use case in production on one product. Goal: stabilise, measure, document wins.",
+  Expanding:
+    "61-90 days. Second product access granted, workspace adoption spreading. Goal: deepen integration, cross-sell signals emerging.",
+  Champion:
+    "90+ days. Multi-product adoption, internal evangelists driving use. Goal: executive alignment, renewal confidence, co-marketing.",
+  Strategic:
+    "ElevenLabs embedded in core business workflows. Removing ElevenLabs would degrade business outcomes. Goal: multi-year, multi-product expansion.",
 };
 
 export const STAGE_INDEX: Record<AdoptionStage, number> = {
-  Explore: 0,
-  "First Build": 1,
-  Scale: 2,
-  Embed: 3,
-  Expand: 4,
+  "First Build": 0,
+  Production: 1,
+  Expanding: 2,
+  Champion: 3,
+  Strategic: 4,
 };
 
 export type RiskLevel = "low" | "medium" | "high";

@@ -8,17 +8,22 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const { accountId, motion } = await req.json();
   const account = getAccount(accountId);
-  if (!account) {
-    return new Response("Account not found", { status: 404 });
-  }
+  if (!account) return new Response("Account not found", { status: 404 });
 
   const accountContext = `Customer: ${account.name}
+Country: ${account.country}
 Industry: ${account.industry}
 Employees: ${account.employees.toLocaleString()}
 Adoption stage: ${account.stage}
-Surfaces in use: API + ${account.surfaces.cfe.seats > 0 ? "CfE" : ""} ${account.surfaces.code.seats > 0 ? "+ Claude Code" : ""}
+Products live: ${account.products.adopted.join(", ") || "None yet"}
+Products trialling: ${account.products.trialling.join(", ") || "None"}
+Products whitespace: ${account.products.whitespace.join(", ") || "None"}
 Top risks: ${account.risks.map((r) => r.label).join("; ")}
-Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
+Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}
+Key stakeholders: ${account.stakeholders
+  .filter((s) => ["Economic Buyer", "Champion"].includes(s.role))
+  .map((s) => `${s.name} (${s.role}, ${s.org})`)
+  .join(", ")}`;
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
@@ -30,7 +35,7 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
       try {
         emit({
           type: "status",
-          message: "Claude is drafting the playbook and self-reviewing in one pass…",
+          message: "Drafting playbook and self-reviewing in a single pass…",
         });
 
         const response = await anthropic.messages.create({
@@ -51,7 +56,6 @@ Top expansion levers: ${account.expansionLevers.slice(0, 2).join("; ")}`;
           .join("");
 
         const parsed = extractJson(text);
-
         emit({ type: "final", playbook: parsed });
         controller.close();
       } catch (e: unknown) {
@@ -80,9 +84,7 @@ function extractJson(text: string): Record<string, unknown> {
   } catch {
     const start = jsonStr.indexOf("{");
     const end = jsonStr.lastIndexOf("}");
-    if (start === -1 || end === -1) {
-      throw new Error("Could not find JSON object in Claude's response");
-    }
+    if (start === -1 || end === -1) throw new Error("No JSON object found in response");
     return JSON.parse(jsonStr.slice(start, end + 1));
   }
 }

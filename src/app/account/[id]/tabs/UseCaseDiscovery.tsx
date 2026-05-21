@@ -11,12 +11,13 @@ import { formatCurrency } from "@/lib/utils";
 interface DiscoveredUseCase {
   name: string;
   department: string;
-  surface: string;
+  product: string;
   complexity: number;
   estimated_monthly_value_usd: number;
   time_to_first_value_days: number;
   suggested_champion_persona: string;
   first_30_days_plan: string[];
+  eu_compliance_notes?: string;
   risks: string[];
 }
 
@@ -27,11 +28,17 @@ interface DiscoveryResult {
 }
 
 const PRESETS = [
-  "The CFO just signaled interest in finance automation. Find use cases.",
-  "Engineering reorg compressed the platform team by 30%. They need force multipliers.",
-  "HR has been asking how Claude can help. Map their highest-ROI opportunities.",
-  "Legal is blocking expansion. Find use cases that win Legal over.",
+  "The VP of Customer Operations wants to automate contact centre calls. Find the right ElevenAgents plays.",
+  "Marketing is asking about localising campaign audio across 10+ EU markets. Map the ElevenCreative opportunity.",
+  "Engineering is building a consumer app and wants to embed a branded voice. Scope the ElevenAPI opportunity.",
+  "Compliance is blocking the current pilot. Find use cases that are lower risk and faster to approve under GDPR.",
 ];
+
+const PRODUCT_TONE = {
+  ElevenAgents: "accent",
+  ElevenCreative: "green",
+  ElevenAPI: "blue",
+} as const;
 
 export function UseCaseDiscoveryTab({ account }: { account: Account }) {
   const [loading, setLoading] = useState(false);
@@ -39,9 +46,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
   const [result, setResult] = useState<DiscoveryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string[]>([]);
-  const [liveCalls, setLiveCalls] = useState<
-    { name: string; input: Record<string, unknown> }[]
-  >([]);
+  const [liveCalls, setLiveCalls] = useState<{ name: string; input: Record<string, unknown> }[]>([]);
 
   async function discover() {
     setLoading(true);
@@ -71,24 +76,13 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
           if (!line) continue;
           try {
             const msg = JSON.parse(line);
-            if (msg.type === "status") {
-              setProgress((p) => [...p, msg.message]);
-            } else if (msg.type === "tool_call") {
-              setLiveCalls((c) => [...c, { name: msg.name, input: msg.input }]);
-            } else if (msg.type === "final") {
-              setResult({
-                use_cases: msg.use_cases ?? [],
-                narrative: msg.narrative ?? "",
-                tool_calls: msg.tool_calls ?? [],
-              });
-            } else if (msg.type === "error") {
-              throw new Error(msg.message);
-            }
+            if (msg.type === "status") setProgress((p) => [...p, msg.message]);
+            else if (msg.type === "tool_call") setLiveCalls((c) => [...c, { name: msg.name, input: msg.input }]);
+            else if (msg.type === "final") {
+              setResult({ use_cases: msg.use_cases ?? [], narrative: msg.narrative ?? "", tool_calls: msg.tool_calls ?? [] });
+            } else if (msg.type === "error") throw new Error(msg.message);
           } catch (parseErr) {
-            // skip malformed lines but propagate explicit error events
-            if (parseErr instanceof Error && parseErr.message && !parseErr.message.includes("JSON")) {
-              throw parseErr;
-            }
+            if (parseErr instanceof Error && !parseErr.message.includes("JSON")) throw parseErr;
           }
         }
       }
@@ -99,20 +93,25 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
     }
   }
 
+  const productTone = (p: string) =>
+    (PRODUCT_TONE[p as keyof typeof PRODUCT_TONE] ?? "muted") as "accent" | "green" | "blue" | "muted";
+
   return (
     <div className="space-y-4">
       <Card>
         <div className="p-5">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
-              <h2 className="font-semibold mb-1">Use Case Discovery Agent</h2>
+              <h2 className="font-semibold mb-1">Expansion Signal Discovery</h2>
               <p className="text-sm text-[var(--text-muted)] max-w-2xl">
-                You describe a customer signal. Claude calls tools — in parallel where possible — to
-                search Anthropic&apos;s use case library, estimate ROI for this company size, and
-                pull starter playbooks. Returns 5-8 prioritized use cases.
+                Describe a customer signal. Claude calls tools — searching ElevenLabs&apos; validated
+                use case library, estimating ROI for this account&apos;s size, and pulling expansion
+                signals — then synthesises 5-8 prioritised plays across all three ElevenLabs products.
+                This mirrors the AI CSM motion Vanessa Piacente described: proactively surfacing
+                ideas before the customer asks.
               </p>
             </div>
-            <Badge tone="accent">Tool use + Streaming · Haiku</Badge>
+            <Badge tone="accent">Tool use · Haiku</Badge>
           </div>
           <div className="space-y-3">
             <textarea
@@ -120,7 +119,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
               onChange={(e) => setSignal(e.target.value)}
               rows={3}
               className="w-full bg-[var(--bg-elev)] border border-[var(--border)] rounded-md px-3 py-2 text-sm font-sans focus:outline-none focus:border-[var(--accent)]"
-              placeholder="Describe a customer signal — a new exec, a reorg, a budget freeze, a strategic priority..."
+              placeholder="Describe a customer signal — a new exec, a strategic priority, a compliance blocker..."
             />
             <div className="flex items-center gap-2 flex-wrap">
               {PRESETS.map((p, i) => (
@@ -134,7 +133,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
               ))}
               <div className="flex-1" />
               <Button onClick={discover} disabled={loading || !signal.trim()}>
-                {loading ? "Agent running…" : "Discover use cases"}
+                {loading ? "Agent running…" : "Discover expansion plays"}
               </Button>
             </div>
           </div>
@@ -149,7 +148,6 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
         </Card>
       )}
 
-      {/* Live progress while agent runs */}
       {(loading || liveCalls.length > 0) && !result && (
         <Card>
           <div className="p-5 space-y-3">
@@ -166,21 +164,14 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
             {liveCalls.length > 0 && (
               <div className="space-y-1.5 pt-2 border-t border-[var(--border)]">
                 <div className="text-xs text-[var(--text-dim)] uppercase tracking-wider">
-                  Tools executed (server-orchestrated)
+                  Tools executed
                 </div>
                 {liveCalls.map((tc, i) => (
                   <div key={i} className="text-xs font-mono text-[var(--text-muted)]">
                     <span className="text-[var(--accent)]">{tc.name}</span>
-                    <span className="text-[var(--text-dim)]">
-                      ({JSON.stringify(tc.input)})
-                    </span>
+                    <span className="text-[var(--text-dim)]">({JSON.stringify(tc.input)})</span>
                   </div>
                 ))}
-              </div>
-            )}
-            {loading && (
-              <div className="text-xs text-[var(--text-dim)] italic pt-2">
-                Streaming events from the agent — connection stays alive.
               </div>
             )}
           </div>
@@ -193,25 +184,14 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
             <Card>
               <div className="p-5">
                 <div className="flex items-baseline justify-between mb-2">
-                  <h3 className="font-semibold text-sm">
-                    Tools executed by the agent ({result.tool_calls.length})
-                  </h3>
-                  <Badge tone="muted">Server-orchestrated · V1</Badge>
+                  <h3 className="font-semibold text-sm">Tools executed ({result.tool_calls.length})</h3>
+                  <Badge tone="muted">Server-orchestrated</Badge>
                 </div>
-                <p className="text-xs text-[var(--text-dim)] mb-3">
-                  For reliability under Vercel&apos;s 60s timeout, the agent loop is
-                  server-orchestrated: the server picks the function from the signal, pre-executes
-                  the tool calls below, then Claude makes a single streaming call to synthesize the
-                  recommendation. Same tool-use pattern, fewer round-trips. In a production
-                  deployment we&apos;d let Claude hold the loop itself with a longer timeout budget.
-                </p>
                 <div className="space-y-1.5">
                   {result.tool_calls.map((tc, i) => (
                     <div key={i} className="text-xs font-mono text-[var(--text-muted)]">
                       <span className="text-[var(--accent)]">{tc.name}</span>
-                      <span className="text-[var(--text-dim)]">
-                        ({JSON.stringify(tc.input)})
-                      </span>
+                      <span className="text-[var(--text-dim)]">({JSON.stringify(tc.input)})</span>
                     </div>
                   ))}
                 </div>
@@ -223,7 +203,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
             <Card>
               <div className="p-5">
                 <h3 className="font-semibold text-sm mb-4">
-                  Discovered use cases ({result.use_cases.length})
+                  Expansion plays discovered ({result.use_cases.length})
                 </h3>
                 <div className="space-y-4">
                   {result.use_cases.map((uc, i) => (
@@ -235,53 +215,41 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
                         <div>
                           <div className="font-semibold text-sm">{uc.name}</div>
                           <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                            {uc.department} · {uc.suggested_champion_persona}
+                            {uc.department} · Champion: {uc.suggested_champion_persona}
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1 text-xs">
-                          <Badge
-                            tone={
-                              uc.surface === "API"
-                                ? "accent"
-                                : uc.surface.includes("Enterprise")
-                                  ? "blue"
-                                  : "green"
-                            }
-                          >
-                            {uc.surface}
-                          </Badge>
+                        <div className="flex flex-col items-end gap-1 text-xs shrink-0">
+                          <Badge tone={productTone(uc.product)}>{uc.product}</Badge>
                           <span className="text-[var(--green)] font-semibold">
                             {formatCurrency(uc.estimated_monthly_value_usd)}/mo
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 text-[11px] text-[var(--text-dim)] mb-2">
-                        <span>
-                          Complexity: {"●".repeat(uc.complexity)}
-                          {"○".repeat(5 - uc.complexity)}
-                        </span>
+                        <span>Complexity: {"●".repeat(uc.complexity)}{"○".repeat(5 - uc.complexity)}</span>
                         <span>Time to value: {uc.time_to_first_value_days}d</span>
                       </div>
-                      {uc.first_30_days_plan && uc.first_30_days_plan.length > 0 && (
-                        <div className="text-xs">
+                      {uc.eu_compliance_notes && (
+                        <div className="text-xs text-[var(--amber)] mb-2">
+                          ⚠ EU/GDPR: {uc.eu_compliance_notes}
+                        </div>
+                      )}
+                      {uc.first_30_days_plan?.length > 0 && (
+                        <div className="text-xs mb-2">
                           <div className="text-[var(--text-dim)] mb-1">First 30 days:</div>
                           <ul className="space-y-0.5 ml-3">
                             {uc.first_30_days_plan.map((p, j) => (
-                              <li key={j} className="list-disc text-[var(--text-muted)]">
-                                {p}
-                              </li>
+                              <li key={j} className="list-disc text-[var(--text-muted)]">{p}</li>
                             ))}
                           </ul>
                         </div>
                       )}
-                      {uc.risks && uc.risks.length > 0 && (
-                        <div className="text-xs mt-2">
+                      {uc.risks?.length > 0 && (
+                        <div className="text-xs">
                           <div className="text-[var(--text-dim)] mb-1">Risks:</div>
                           <ul className="space-y-0.5 ml-3">
                             {uc.risks.map((r, j) => (
-                              <li key={j} className="list-disc text-[var(--amber)]">
-                                {r}
-                              </li>
+                              <li key={j} className="list-disc text-[var(--amber)]">{r}</li>
                             ))}
                           </ul>
                         </div>
@@ -297,7 +265,7 @@ export function UseCaseDiscoveryTab({ account }: { account: Account }) {
             <Card>
               <div className="p-6">
                 <h3 className="font-semibold text-sm mb-3 text-[var(--accent-soft)]">
-                  Claude&apos;s recommendation
+                  Recommendation
                 </h3>
                 <ClaudeOutput text={result.narrative} />
               </div>

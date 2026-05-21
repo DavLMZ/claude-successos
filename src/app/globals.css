@@ -1,20 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0e0e10;
-  --bg-elev: #17171a;
-  --bg-card: #1c1c20;
-  --border: #2a2a30;
-  --border-strong: #3a3a44;
-  --text: #f5f1ea;
-  --text-muted: #a3a09a;
-  --text-dim: #6b6862;
-  --accent: #d97757;
-  --accent-soft: #f4a987;
+  --bg: #0b0b0d;
+  --bg-elev: #141416;
+  --bg-card: #18181c;
+  --border: #262630;
+  --border-strong: #383848;
+  --text: #f0ede8;
+  --text-muted: #9e9b96;
+  --text-dim: #646068;
+  /* ElevenLabs brand */
+  --accent: #f97316;          /* ElevenLabs orange — primary CTA / highlight */
+  --accent-soft: #fb923c;     /* lighter orange for text on dark */
   --green: #5fbf8f;
   --amber: #e5b252;
   --red: #e07a6b;
   --blue: #7aa6d9;
+  /* Product-specific colours matching ElevenLabs product identity */
+  --eleven-agents: #14b8a6;   /* teal — ElevenAgents */
+  --eleven-creative: #f97316; /* orange — ElevenCreative */
+  --eleven-api: #94a3b8;      /* slate — ElevenAPI */
 }
 
 @theme inline {
@@ -32,6 +37,9 @@
   --color-amber: var(--amber);
   --color-red: var(--red);
   --color-blue: var(--blue);
+  --color-eleven-agents: var(--eleven-agents);
+  --color-eleven-creative: var(--eleven-creative);
+  --color-eleven-api: var(--eleven-api);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 

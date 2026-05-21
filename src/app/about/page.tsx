@@ -2,225 +2,151 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 
-const CSM_REQUIREMENTS: { responsibility: string; delivery: string; where: string }[] = [
-  {
-    responsibility:
-      "Be fluent across all three Claude surfaces — knowing which to recommend for which use case",
-    delivery:
-      "Three-surface adoption model. Every account screen breaks out API (consumption meter), Claude for Enterprise (seats), and Claude Code (seats) separately.",
-    where: "Account detail · Overview",
-  },
-  {
-    responsibility:
-      "Monitor consumption and seat utilization, proactively address under-utilization across both meters",
-    delivery:
-      "Unified consumption + seat dashboards with 90-day trends. Risk signals flag under-utilization automatically.",
-    where: "Account detail · Overview + Cockpit",
-  },
-  {
-    responsibility: "Quantify business outcomes, ROI, and impact metrics with CFO-ready evidence",
-    delivery:
-      "Value Realization Ledger — every outcome with baseline, current, $ value, validation source. CFO-ready.",
-    where: "Account detail · Value Ledger",
-  },
-  {
-    responsibility:
-      "Identify net-new use cases and lines of business across the customer's org",
-    delivery:
-      "Use Case Discovery Agent — Claude with tool use searches the use case library, estimates ROI, returns prioritized recommendations.",
-    where: "Account detail · Use Case Discovery",
-  },
-  {
-    responsibility:
-      "Execute change management at enterprise scale — Train the Trainer, Center of Excellence, exec briefings, developer onboarding",
-    delivery:
-      "Change Management Playbook Generator with 5 motion types. Single-pass agent that drafts and self-reviews in one Claude call.",
-    where: "Account detail · Change Mgmt Playbook",
-  },
-  {
-    responsibility:
-      "Run QBRs and serve as the two-way conduit between customer and Anthropic",
-    delivery:
-      "QBR Composer streams a full QBR draft with sections for both 'asks of customer' and 'asks of Anthropic'.",
-    where: "Account detail · QBR Composer",
-  },
-  {
-    responsibility:
-      "Identify growth opportunities and translate them into actionable expansion plans",
-    delivery:
-      "Account Brief uses Claude Sonnet with extended thinking to reason through expansion theses with explicit risks. Streamed live.",
-    where: "Account detail · Account Brief",
-  },
-  {
-    responsibility:
-      "Technical fluency across AI/ML concepts, API integrations, and commercial models — across stakeholders from devs to execs",
-    delivery:
-      "Pricing Translator turns the most-confused-about commercial reality (API vs subscription vs seats) into a clear customer-facing explainer.",
-    where: "/pricing-translator",
-  },
-  {
-    responsibility:
-      "Build scalable engagement playbooks reusable across a portfolio of strategic accounts",
-    delivery:
-      "Cockpit handles a portfolio of strategic accounts (Helix, Northwind, Skyforge), not just one — playbook outputs are templated for reuse.",
-    where: "Cockpit",
-  },
-];
-
-const CLAUDE_CAPABILITIES = [
-  {
-    name: "Extended thinking",
-    where: "Account Brief",
-    why: "Multi-dimensional account analysis benefits from visible chain-of-reasoning. Sonnet 4.5 with thinking enabled, streamed live so the reasoning trace appears in real time.",
-  },
-  {
-    name: "Streaming",
-    where: "Account Brief, QBR Composer, Pricing Translator, Use Case Discovery",
-    why: "Long-form structured documents — perceived latency matters when CSMs draft 10+ QBRs per quarter. Every long-form module streams.",
-  },
-  {
-    name: "Tool use (function calling)",
-    where: "Use Case Discovery",
-    why: "Simulates the agentic pattern that production CS apps need — querying internal systems then reasoning over results. V1 ships with server-orchestrated tool execution (documented inline) for reliability under Vercel's 60s timeout.",
-  },
-  {
-    name: "Self-reviewing single-pass generation",
-    where: "Playbook Generator",
-    why: "Claude drafts AND self-critiques in a single Haiku call (~10-15s). The self-review surfaces what a skeptical VP would push back on — agentic pattern without multi-call timeout fragility.",
-  },
-  {
-    name: "Model selection (Sonnet vs Haiku)",
-    where: "Throughout",
-    why: "Sonnet 4.5 for nuanced reasoning (Account Brief, QBR, Use Case synthesis, Pricing); Haiku 4.5 for fast structured generation (Playbook). Each prompt file documents the choice.",
-  },
-  {
-    name: "Structured outputs (JSON)",
-    where: "Playbook Generator, Use Case Discovery",
-    why: "Enables rich, typed UI rendering downstream. Schema in the system prompt; extraction in the route handler with fenced-block + fallback parsing.",
-  },
-];
-
 export default function AboutPage() {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight mb-2">About Claude SuccessOS</h1>
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight mb-2">About ElevenLabs SuccessOS</h1>
         <p className="text-sm text-[var(--text-muted)]">
-          A working Customer Success command centre for teams adopting Claude — built around the
-          operating realities of a Strategic CSM.
+          Built for the Customer Success — Strategic — Western Europe application at ElevenLabs.
         </p>
       </div>
 
-      <Card>
-        <div className="p-5">
-          <h2 className="font-semibold mb-3">Why this exists</h2>
+      {/* Why this app */}
+      <Card className="mb-6">
+        <div className="p-6">
+          <h2 className="font-semibold mb-3">What this app demonstrates</h2>
           <div className="space-y-3 text-sm text-[var(--text-muted)]">
             <p>
-              A great Strategic CSM doesn&apos;t just <em>describe</em> what Claude can do — they
-              build a system around it. Claude SuccessOS is that system, scoped down to a portfolio
-              that fits on one screen.
+              This app is designed to show three things simultaneously: deep understanding of
+              ElevenLabs&apos; product suite, a working model of how enterprise CS operates at
+              ElevenLabs, and genuine AI-native operating style — not just in the job but in how
+              the application itself was built and presented.
             </p>
             <p>
-              Every module mirrors a real Strategic CSM responsibility. Every interactive feature
-              uses a different Claude capability so the product surface is on display, not just the
-              brand. The flagship synthetic account, <strong>Helix Systems</strong>, is the
-              canonical strategic profile: a 100,000-employee global tech leader running API +
-              Claude for Enterprise + Claude Code in parallel.
+              Vanessa Piacente said it directly: &ldquo;The people who have impressed me the most
+              as we&apos;re hiring are people who are going above and beyond — they&apos;ve taken
+              the time to learn ElevenLabs, even if they don&apos;t use ElevenLabs day-to-day,
+              then put a demo together and sent it.&rdquo;
             </p>
             <p>
-              The codebase, the prompts, and the design choices are all artifacts of how a Strategic
-              CSM should operate: opinionated, evidence-based, allergic to fluff.
+              This app does exactly that — and goes one step further by using ElevenLabs&apos; own
+              API to generate voice briefings. The AI CSM that speaks is not a gimmick: it mirrors
+              precisely what Vanessa described building internally.
             </p>
           </div>
         </div>
       </Card>
 
-      <Card>
-        <div className="p-5">
-          <h2 className="font-semibold mb-3">Strategic CSM requirements → how the app delivers</h2>
-          <div className="space-y-3">
-            {CSM_REQUIREMENTS.map((item, i) => (
-              <div key={i} className="text-sm border-l-2 border-[var(--accent)]/40 pl-3">
-                <div className="text-[var(--text-muted)] mb-1 text-xs">
-                  <span className="text-[var(--accent-soft)] font-medium">Responsibility:</span>{" "}
-                  {item.responsibility}
+      {/* AI feature map */}
+      <Card className="mb-6">
+        <div className="p-6">
+          <h2 className="font-semibold mb-4">AI feature map</h2>
+          <div className="space-y-4">
+            {[
+              {
+                feature: "Account Brief",
+                model: "claude-sonnet-4-6",
+                technique: "Extended thinking + Streaming",
+                why: "Extended thinking shows the reasoning chain — not just conclusions. Streaming means a CSM sees the brief word-by-word rather than waiting. Together they mirror how a senior CSM would actually think through an account before a meeting.",
+              },
+              {
+                feature: "QBR Composer",
+                model: "claude-sonnet-4-6",
+                technique: "Streaming",
+                why: "QBRs have a fixed structure that Sonnet executes well. Streaming gives the CSM instant feedback and makes the generation feel alive rather than a black-box wait.",
+              },
+              {
+                feature: "Expansion Signal Discovery",
+                model: "claude-haiku-4-5",
+                technique: "Tool use (server-orchestrated)",
+                why: "The agent queries a mock ElevenLabs use case library, ROI engine, and expansion signal database — then synthesises. Tool use is server-orchestrated for Vercel's 60s timeout reliability; in production it would be a full agent loop.",
+              },
+              {
+                feature: "Adoption Playbook",
+                model: "claude-haiku-4-5",
+                technique: "Self-reviewing single-pass JSON",
+                why: "Haiku generates the full 30/60/90 playbook AND a VP-level self-review critique in one call. The self-review is the guard rail — it surfaces what a skeptical VP would push back on before the CSM sends it to a customer exec.",
+              },
+              {
+                feature: "Voice Briefing",
+                model: "ElevenLabs Eleven Multilingual v2",
+                technique: "ElevenLabs API + Claude script generation",
+                why: "Claude writes the script. ElevenLabs speaks it. This is the meta feature — a Customer Success tool for ElevenLabs that uses ElevenLabs' own voice technology. It mirrors the AI CSM motion Vanessa described: pulling account context and surfacing insights proactively, now narrated.",
+              },
+            ].map((item) => (
+              <div key={item.feature} className="border border-[var(--border)] rounded-md p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="font-semibold text-sm">{item.feature}</div>
+                  <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                    <Badge tone="muted">{item.model}</Badge>
+                    <Badge tone="accent">{item.technique}</Badge>
+                  </div>
                 </div>
-                <div className="text-[var(--text)] mb-0.5">{item.delivery}</div>
-                <div className="text-[var(--text-dim)] text-xs">→ {item.where}</div>
+                <p className="text-xs text-[var(--text-muted)]">{item.why}</p>
               </div>
             ))}
           </div>
         </div>
       </Card>
 
-      <Card>
-        <div className="p-5">
-          <h2 className="font-semibold mb-3">Claude capabilities demonstrated</h2>
-          <div className="space-y-3">
-            {CLAUDE_CAPABILITIES.map((c, i) => (
-              <div key={i} className="text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge tone="accent">{c.name}</Badge>
-                  <span className="text-xs text-[var(--text-dim)]">in {c.where}</span>
-                </div>
-                <div className="text-[var(--text-muted)] text-xs">{c.why}</div>
+      {/* ElevenLabs CS model */}
+      <Card className="mb-6">
+        <div className="p-6">
+          <h2 className="font-semibold mb-3">How this maps to the ElevenLabs CS model</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              {
+                label: "Two core metrics",
+                value: "NRR and New Product Expansion — both tracked in the Revenue Engine and per-account.",
+              },
+              {
+                label: "Three product surfaces",
+                value: "ElevenAgents, ElevenCreative, ElevenAPI — all modelled with distinct metrics and use cases.",
+              },
+              {
+                label: "Adoption journey",
+                value: "First Build → Production → Expanding → Champion → Strategic. Critical 30-60 day window modelled.",
+              },
+              {
+                label: "AI CSM motion",
+                value: "Pulling context, surfacing proactive ideas, expansion signals from trialling data — mirroring Vanessa's internal build.",
+              },
+              {
+                label: "DACH / WE market nuance",
+                value: "GDPR, EU AI Act, German procurement cycles, French compliance culture — all flagged in prompts and data.",
+              },
+              {
+                label: "Whitespace expansion",
+                value: "Accounts given product access before contract (ElevenLabs' model) — trialling signals drive the expansion matrix.",
+              },
+            ].map((item) => (
+              <div key={item.label} className="bg-[var(--bg-elev)] rounded-md p-3">
+                <div className="text-xs font-medium text-[var(--text)] mb-1">{item.label}</div>
+                <div className="text-xs text-[var(--text-muted)]">{item.value}</div>
               </div>
             ))}
           </div>
         </div>
       </Card>
 
+      {/* Data note */}
       <Card>
-        <div className="p-5">
-          <h2 className="font-semibold mb-3">A few intentional design choices</h2>
-          <ul className="space-y-2 text-sm text-[var(--text-muted)] list-disc pl-5">
-            <li>
-              <strong className="text-[var(--text)]">Three synthetic accounts, not one.</strong> The
-              deep case lives in Helix, but real Strategic CSM work is portfolio thinking — the
-              cockpit reflects that.
-            </li>
-            <li>
-              <strong className="text-[var(--text)]">
-                Prompts live in their own files, versioned.
-              </strong>{" "}
-              Each prompt is annotated with the model chosen and why. Treating prompts as artifacts
-              is how a serious CS team operates at scale.
-            </li>
-            <li>
-              <strong className="text-[var(--text)]">
-                Risk signals lead with leading indicators.
-              </strong>{" "}
-              Seat under-utilization, stalled pilots, stakeholder sentiment shifts — not churn or
-              NPS, which arrive too late to act on.
-            </li>
-            <li>
-              <strong className="text-[var(--text)]">
-                The Pricing Translator is here on purpose.
-              </strong>{" "}
-              Commercial confusion (API vs subscription vs seats) is the single most common question
-              any Anthropic CSM fields. Building a module for it is what CSM-empathy-to-product
-              looks like.
-            </li>
-          </ul>
+        <div className="p-5 text-xs text-[var(--text-muted)]">
+          <strong className="text-[var(--text)]">Data note:</strong> All account data is synthetic.
+          Company names are real but all metrics, stakeholder names, and use cases are fictional.
+          No confidential data was used. The consumption time series is procedurally generated.
+          See{" "}
+          <Link href="/" className="underline">
+            the portfolio
+          </Link>{" "}
+          to explore the accounts, or start with{" "}
+          <Link href="/account/telekom" className="underline">
+            Deutsche Telekom
+          </Link>{" "}
+          for the most complete example.
         </div>
       </Card>
-
-      <Card>
-        <div className="p-5">
-          <h2 className="font-semibold mb-3">Stack</h2>
-          <div className="text-sm text-[var(--text-muted)] space-y-1">
-            <div>Next.js 16 (App Router) · TypeScript · Tailwind 4 · Recharts</div>
-            <div>Anthropic SDK · Claude Sonnet 4.5 + Claude Haiku 4.5</div>
-            <div>Hosted on Vercel · Source on GitHub</div>
-          </div>
-        </div>
-      </Card>
-
-      <div className="text-center pt-4">
-        <Link href="/" className="text-[var(--accent-soft)] hover:underline text-sm">
-          ← Back to cockpit
-        </Link>
-      </div>
     </div>
   );
 }

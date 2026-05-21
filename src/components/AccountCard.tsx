@@ -3,89 +3,114 @@ import type { Account } from "@/data/accounts";
 import { AdoptionStageIndicator } from "./AdoptionStageIndicator";
 import { Badge } from "./ui/Badge";
 import { Card } from "./ui/Card";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+
+const PRODUCT_ADOPTED_CLASSES = {
+  ElevenAgents:  "bg-[var(--eleven-agents)]/15 text-[var(--eleven-agents)] border-[var(--eleven-agents)]/30",
+  ElevenCreative:"bg-[var(--eleven-creative)]/15 text-[var(--eleven-creative)] border-[var(--eleven-creative)]/30",
+  ElevenAPI:     "bg-[var(--eleven-api)]/15 text-[var(--eleven-api)] border-[var(--eleven-api)]/30",
+} as const;
 
 export function AccountCard({ account }: { account: Account }) {
   const topRisk = account.risks[0];
-  const apiPct = Math.round(
-    (account.surfaces.api.consumed / account.surfaces.api.contracted) * 100,
-  );
-  const cfePct = Math.round(
-    (account.surfaces.cfe.activated / Math.max(account.surfaces.cfe.seats, 1)) * 100,
-  );
-  const codePct = account.surfaces.code.seats > 0
-    ? Math.round((account.surfaces.code.activated / account.surfaces.code.seats) * 100)
-    : null;
+  const allProducts = ["ElevenAgents", "ElevenCreative", "ElevenAPI"] as const;
 
   const lastMonth = account.consumption.slice(-30);
   const prevMonth = account.consumption.slice(-60, -30);
-  const lastSpend = lastMonth.reduce((s, p) => s + p.apiSpend, 0);
-  const prevSpend = prevMonth.reduce((s, p) => s + p.apiSpend, 0);
-  const trend = prevSpend > 0 ? Math.round(((lastSpend - prevSpend) / prevSpend) * 100) : 0;
+  const lastAgents = lastMonth.reduce((s, p) => s + p.agentCallVolume, 0);
+  const prevAgents = prevMonth.reduce((s, p) => s + p.agentCallVolume, 0);
+  const lastApi = lastMonth.reduce((s, p) => s + p.apiCharacters, 0);
+  const prevApi = prevMonth.reduce((s, p) => s + p.apiCharacters, 0);
+
+  const dominantTrend = lastAgents > 0
+    ? (prevAgents > 0 ? Math.round(((lastAgents - prevAgents) / prevAgents) * 100) : null)
+    : lastApi > 0
+      ? (prevApi > 0 ? Math.round(((lastApi - prevApi) / prevApi) * 100) : null)
+      : null;
 
   return (
     <Link href={`/account/${account.id}`} className="block group">
       <Card className="hover:border-[var(--border-strong)] transition-colors h-full">
         <div className="p-5 space-y-4">
+          {/* Header */}
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-semibold text-lg group-hover:text-[var(--accent-soft)] transition-colors">
                 {account.name}
               </h3>
               <p className="text-xs text-[var(--text-dim)] mt-0.5">
-                {account.industry} · {formatNumber(account.employees)} employees
+                {account.country} · {account.industry}
               </p>
             </div>
             <Badge tone="accent">{account.stage}</Badge>
           </div>
 
-          <AdoptionStageIndicator stage={account.stage} />
+          {/* Adoption stage bar */}
+          <AdoptionStageIndicator stage={account.stage} size="sm" />
 
-          <div className="grid grid-cols-3 gap-3 text-xs">
-            <div>
-              <div className="text-[var(--text-dim)] mb-1">API</div>
-              <div className="font-semibold">{apiPct}%</div>
-              <div className="text-[10px] text-[var(--text-dim)]">of commit</div>
-            </div>
-            <div>
-              <div className="text-[var(--text-dim)] mb-1">CfE seats</div>
-              <div className="font-semibold">{cfePct}%</div>
-              <div className="text-[10px] text-[var(--text-dim)]">
-                {account.surfaces.cfe.activated}/{account.surfaces.cfe.seats}
-              </div>
-            </div>
-            <div>
-              <div className="text-[var(--text-dim)] mb-1">Claude Code</div>
-              <div className="font-semibold">{codePct !== null ? `${codePct}%` : "—"}</div>
-              <div className="text-[10px] text-[var(--text-dim)]">
-                {account.surfaces.code.seats > 0
-                  ? `${account.surfaces.code.activated}/${account.surfaces.code.seats}`
-                  : "not yet"}
-              </div>
-            </div>
+          {/* Product adoption matrix (mini) */}
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            {allProducts.map((p) => {
+              const isAdopted = account.products.adopted.includes(p);
+              const isTrialling = account.products.trialling.includes(p);
+              return (
+                <div key={p} className="text-center">
+                  <div
+                    className={`rounded px-1 py-1 text-[10px] font-medium border ${
+                      isAdopted
+                        ? PRODUCT_ADOPTED_CLASSES[p]
+                        : isTrialling
+                          ? "bg-[var(--amber)]/15 text-[var(--amber)] border-[var(--amber)]/30"
+                          : "bg-[var(--bg-elev)] text-[var(--text-dim)] border-[var(--border)]"
+                    }`}
+                  >
+                    {p.replace("Eleven", "")}
+                  </div>
+                  <div className="text-[9px] text-[var(--text-dim)] mt-0.5">
+                    {isAdopted ? "live" : isTrialling ? "trial" : "gap"}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
+          {/* Metrics row */}
           <div className="flex items-center justify-between text-xs pt-2 border-t border-[var(--border)]">
             <div className="text-[var(--text-dim)]">
-              30d spend trend{" "}
+              NRR{" "}
               <span
                 className={
-                  trend > 0 ? "text-[var(--green)]" : trend < 0 ? "text-[var(--red)]" : ""
+                  account.nrr >= 1.2
+                    ? "text-[var(--green)]"
+                    : account.nrr >= 1.0
+                      ? "text-[var(--amber)]"
+                      : "text-[var(--red)]"
                 }
               >
-                {trend > 0 ? "+" : ""}
-                {trend}%
+                {(account.nrr * 100).toFixed(0)}%
               </span>
             </div>
-            <div className="text-[var(--text-dim)]">
-              ACV {formatCurrency(account.contractValue)}
-            </div>
+            {dominantTrend !== null && (
+              <div className="text-[var(--text-dim)]">
+                30d{" "}
+                <span className={dominantTrend > 0 ? "text-[var(--green)]" : "text-[var(--red)]"}>
+                  {dominantTrend > 0 ? "+" : ""}
+                  {dominantTrend}%
+                </span>
+              </div>
+            )}
+            <div className="text-[var(--text-dim)]">ACV {formatCurrency(account.contractValue)}</div>
           </div>
 
+          {/* Risk signal */}
           {topRisk && (
             <div className="flex items-start gap-2 text-xs pt-2 border-t border-[var(--border)]">
-              <Badge tone={topRisk.level === "high" ? "red" : topRisk.level === "medium" ? "amber" : "muted"}>
-                {topRisk.level} risk
+              <Badge
+                tone={
+                  topRisk.level === "high" ? "red" : topRisk.level === "medium" ? "amber" : "muted"
+                }
+              >
+                {topRisk.level}
               </Badge>
               <span className="text-[var(--text-muted)] line-clamp-2">{topRisk.label}</span>
             </div>

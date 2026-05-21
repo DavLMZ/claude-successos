@@ -66,13 +66,13 @@ export function AccountBriefTab({ account }: { account: Account }) {
             <div>
               <h2 className="font-semibold mb-1">Account Brief</h2>
               <p className="text-sm text-[var(--text-muted)] max-w-2xl">
-                Claude Sonnet reasons through the full account state — consumption health,
-                stakeholder sentiment, risk signals, expansion levers — using extended thinking,
-                then streams the brief. A VP could read this in 90 seconds before a customer
-                meeting.
+                Claude Sonnet reasons through the full ElevenLabs account state — product adoption
+                health across Agents/Creative/API, stakeholder sentiment, GDPR/EU AI Act risks,
+                expansion signals — using extended thinking, then streams the brief. A VP could
+                read this in 90 seconds before a customer meeting.
               </p>
             </div>
-            <Badge tone="accent">Extended thinking + Streaming · Sonnet</Badge>
+            <Badge tone="accent">Extended thinking + Streaming · Sonnet 4.6</Badge>
           </div>
           <Button onClick={generate} disabled={loading}>
             {loading
@@ -109,8 +109,9 @@ export function AccountBriefTab({ account }: { account: Account }) {
       {loading && !brief && !thinking && (
         <Card>
           <div className="p-6 text-sm text-[var(--text-muted)] italic">
-            Claude is reasoning through 90 days of consumption data, 6 stakeholder relationships,
-            and 7 use cases. Thinking takes 5-10 seconds, then the brief streams in.
+            Claude is reasoning through 90 days of ElevenLabs product consumption data, stakeholder
+            relationships, GDPR/compliance risks, and expansion signals. Thinking takes 5-10
+            seconds, then the brief streams in.
           </div>
         </Card>
       )}
