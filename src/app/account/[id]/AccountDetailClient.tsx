@@ -158,7 +158,7 @@ export function AccountDetailClient({ account }: { account: Account }) {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-[var(--border)] mb-6 overflow-x-auto">
+      <div className="border-b border-[var(--border)] mb-6 overflow-x-auto scrollbar-none">
         <div className="flex gap-1 min-w-max">
           {TABS.map((tab) => (
             <button
@@ -172,7 +172,7 @@ export function AccountDetailClient({ account }: { account: Account }) {
               )}
             >
               {tab.label}
-              {tab.feature && (
+              {tab.feature && activeTab === tab.id && (
                 <span className="ml-2 text-[10px] text-[var(--text-dim)] font-normal">
                   · {tab.feature}
                 </span>
