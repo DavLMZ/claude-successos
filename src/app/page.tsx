@@ -1,4 +1,4 @@
-import { AccountCard } from "@/components/AccountCard";
+import { PortfolioGrid } from "@/components/PortfolioGrid";
 import { ACCOUNTS } from "@/data/accounts";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -115,11 +115,9 @@ export default function Home() {
         </div>
       </Card>
 
-      {/* Account grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-        {ACCOUNTS.map((account) => (
-          <AccountCard key={account.id} account={account} />
-        ))}
+      {/* Account grid with sort + filter */}
+      <div className="mb-10">
+        <PortfolioGrid accounts={ACCOUNTS} />
       </div>
 
       {/* Risk watchlist */}
